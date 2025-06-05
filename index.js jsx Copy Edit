@@ -1,0 +1,50 @@
+import { useState } from "react";
+
+export default function Home() {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  async function sendMessage() {
+    if (!input.trim()) return;
+    const userMessage = { role: "user", content: input };
+    setMessages([...messages, userMessage]);
+    setInput("");
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [...messages, userMessage] }),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      alert("Error: " + data.error);
+      return;
+    }
+
+    setMessages([...messages, userMessage, { role: "assistant", content: data.text }]);
+  }
+
+  return (
+    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
+      <h1>AryaGPT Chatbot</h1>
+      <div style={{ minHeight: 300, border: "1px solid #ccc", padding: 10, overflowY: "auto" }}>
+        {messages.map((msg, idx) => (
+          <div key={idx} style={{ textAlign: msg.role === "user" ? "right" : "left", margin: "10px 0" }}>
+            <b>{msg.role === "user" ? "You" : "AryaGPT"}:</b> {msg.content}
+          </div>
+        ))}
+      </div>
+      <textarea
+        rows={3}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        style={{ width: "100%", marginTop: 10 }}
+        placeholder="Type your message here..."
+      />
+      <button onClick={sendMessage} style={{ marginTop: 10 }}>
+        Send
+      </button>
+    </div>
+  );
+}
